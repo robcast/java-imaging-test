@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.FileImageInputStream;
 
 public class TestProfileLoading {
@@ -50,10 +51,23 @@ public class TestProfileLoading {
         RandomAccessFile rf = new RandomAccessFile(fn, "r");
         FileImageInputStream istream = new FileImageInputStream(rf);
         reader.setInput(istream);
+        // choose readParam
+        ImageReadParam readParam = reader.getDefaultReadParam();
+		for (Iterator<ImageTypeSpecifier> i = reader.getImageTypes(0); i.hasNext();) {
+			ImageTypeSpecifier type = (ImageTypeSpecifier) i.next();
+			ColorModel cm = type.getColorModel();
+			ColorSpace cs = cm.getColorSpace();
+			logger.info("possible destination color model: " + cm + " color space: " + cs + " is sRGB=" + cs.isCS_sRGB());
+			if (!cs.isCS_sRGB()) {
+				logger.info(" selected destination type " + type);
+				readParam.setDestinationType(type);
+			}
+		}
+
         // read image
 		logger.info("Loading file: " + fn);
 		logger.info("Using reader: " + reader);
-		BufferedImage img = reader.read(0);
+		BufferedImage img = reader.read(0, readParam);
 		return img;
 	}
 
