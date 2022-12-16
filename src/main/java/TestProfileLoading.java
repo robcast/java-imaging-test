@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
@@ -21,6 +23,17 @@ public class TestProfileLoading {
 	
 	static Logger logger = Logger.getLogger(TestProfileLoading.class.getName());
 
+	static {
+		// set log level from property
+		String lvlVal = System.getProperty("java.util.logging.ConsoleHandler.level");
+		if (lvlVal != null) {
+			Level level = Level.parse(lvlVal);
+		    for(Handler h : Logger.getLogger("").getHandlers())    
+		        h.setLevel(level);
+		    logger.setLevel(level);
+		}
+	}
+	
 	private static BufferedImage loadImage(String mt, String fn) throws Exception, FileNotFoundException, IOException {
 		// let ImageIO choose Reader type
 		ImageReader reader = null;
