@@ -102,7 +102,7 @@ public class TestProfileLoading {
     private static void checkGamut(Map<String, Integer> res) {
         if (res.get("px1-red-raw").equals(res.get("px2-red-raw"))) {
             // raw values are the same
-            logger.info("RESULT: input color gamut was cut off! (srgb-raw == dci-p3-raw)");
+            logger.info("RESULT: color gamut is saturated sRGB (srgb-raw == dci-p3-raw)");
         } else if (!res.get("px1-red-srgb").equals(res.get("px2-red-srgb"))) {
             // raw values are different and srgb values are different
             logger.info(
