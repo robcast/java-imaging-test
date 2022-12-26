@@ -57,7 +57,8 @@ public class TestProfileLoading {
             ColorModel cm = type.getColorModel();
             ColorSpace cs = cm.getColorSpace();
             logger.fine(
-                    "  possible destination color model: " + cm + " color space: " + cs + " is sRGB=" + cs.isCS_sRGB());
+                    "  possible destination color model: " + cm + " color space: " + cs + " is sRGB=" + cs.isCS_sRGB() 
+                    + " bitdepth=" + Arrays.toString(cm.getComponentSize()));
             if (destSrgb && cs.isCS_sRGB()) {
                 logger.fine("    selected as destination");
                 readParam.setDestinationType(type);
