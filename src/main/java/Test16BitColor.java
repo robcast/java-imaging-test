@@ -412,6 +412,7 @@ public class Test16BitColor {
         //checkGamut(res);
         writeImage(img2, "TIFF", "output-from-srgb-tiff16-scale2x-interp.tiff");
 
+        logger.info("Java version: " + System.getProperty("java.version"));
 	}
 
 }
