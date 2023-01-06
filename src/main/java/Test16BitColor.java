@@ -1,4 +1,5 @@
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -13,6 +14,8 @@ import java.awt.image.ComponentColorModel;
 import java.awt.image.ConvolveOp;
 import java.awt.image.DataBuffer;
 import java.awt.image.Kernel;
+import java.awt.image.PixelInterleavedSampleModel;
+import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -88,6 +91,7 @@ public class Test16BitColor {
     }
 
 	private static BufferedImage changeProfile(BufferedImage inBi, ICC_Profile profile) {
+        // method suggested by Harald K in https://stackoverflow.com/a/74873159/4912 
 		ColorModel inCM = inBi.getColorModel();
 		boolean hasAlpha = inCM.hasAlpha();
 		boolean isAlphaPre = inCM.isAlphaPremultiplied();
@@ -107,6 +111,7 @@ public class Test16BitColor {
 	}
 
 	private static void changeRasterToSrgb(BufferedImage img, ICC_Profile realProfile) {
+	    // method suggested by Harald K in https://stackoverflow.com/a/74873159/4912 
 		ICC_Profile srgbProf = ICC_Profile.getInstance(ColorSpace.CS_sRGB);
 		ColorConvertOp cco = new ColorConvertOp(new ICC_Profile[] {realProfile, srgbProf}, null);
 		WritableRaster colorRaster;
@@ -126,7 +131,7 @@ public class Test16BitColor {
 		return bo;
 	}
 
-    private static BufferedImage changeTo8BitDepth(BufferedImage bi) {
+    private static BufferedImage changeTo8BitDepth1(BufferedImage bi) {
         ColorModel cm = bi.getColorModel();
         boolean hasAlpha = cm.hasAlpha();
         boolean isAlphaPre = cm.isAlphaPremultiplied();
@@ -154,6 +159,47 @@ public class Test16BitColor {
         // convert using drawImage
         newBi.createGraphics().drawImage(bi, null, 0, 0);
         return newBi;
+    }
+
+    private static BufferedImage changeTo8BitDepth(BufferedImage original) {
+        // method suggested by Harald K in https://stackoverflow.com/a/74995441/4912
+        
+        ColorModel cm = original.getColorModel();
+
+        // Create 8 bit color model
+        ColorModel newCM = new ComponentColorModel(cm.getColorSpace(), cm.hasAlpha(), cm.isAlphaPremultiplied(),
+                cm.getTransparency(), DataBuffer.TYPE_BYTE);
+        WritableRaster newRaster = newCM.createCompatibleWritableRaster(original.getWidth(), original.getHeight());
+        BufferedImage newImage = new BufferedImage(newCM, newRaster, newCM.isAlphaPremultiplied(), null);
+
+        // convert using setData
+        // newImage.setData(as8BitRaster(original.getRaster())); // Works
+        newRaster.setDataElements(0, 0, as8BitRaster(original.getRaster())); // Faster, requires less conversion
+
+        return newImage;
+    }
+
+    private static Raster as8BitRaster(WritableRaster raster) {
+        // Assumption: Raster is TYPE_USHORT (16 bit) and has
+        // PixelInterleavedSampleModel
+        PixelInterleavedSampleModel sampleModel = (PixelInterleavedSampleModel) raster.getSampleModel();
+
+        // We'll create a custom data buffer, that delegates to the original 16 bit
+        // buffer
+        final DataBuffer buffer = raster.getDataBuffer();
+
+        return Raster.createInterleavedRaster(new DataBuffer(DataBuffer.TYPE_BYTE, buffer.getSize()) {
+            @Override
+            public int getElem(int bank, int i) {
+                return buffer.getElem(bank, i) >>> 8; // We only need the upper 8 bits of the 16 bit sample
+            }
+
+            @Override
+            public void setElem(int bank, int i, int val) {
+                throw new UnsupportedOperationException("Raster is read only!");
+            }
+        }, raster.getWidth(), raster.getHeight(), sampleModel.getScanlineStride(), sampleModel.getPixelStride(),
+                sampleModel.getBandOffsets(), new Point());
     }
     
     private static BufferedImage scale(BufferedImage img, float scaleX, float scaleY, boolean interpol) {

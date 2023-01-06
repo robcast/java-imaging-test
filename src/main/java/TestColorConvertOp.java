@@ -97,6 +97,7 @@ public class TestColorConvertOp {
 	}
 
 	private static BufferedImage changeProfile(BufferedImage inBi, ICC_Profile profile) {
+        // method suggested by Harald K in https://stackoverflow.com/a/74873159/4912 
 		ColorModel inCM = inBi.getColorModel();
 		boolean hasAlpha = inCM.hasAlpha();
 		boolean isAlphaPre = inCM.isAlphaPremultiplied();
@@ -135,6 +136,7 @@ public class TestColorConvertOp {
 	}
 
 	private static void changeRasterToSrgb(BufferedImage img, ICC_Profile realProfile) {
+        // method suggested by Harald K in https://stackoverflow.com/a/74873159/4912 
 		ICC_Profile srgbProf = ICC_Profile.getInstance(ColorSpace.CS_sRGB);
 		ColorConvertOp cco = new ColorConvertOp(new ICC_Profile[] {realProfile, srgbProf}, null);
 		WritableRaster colorRaster;
